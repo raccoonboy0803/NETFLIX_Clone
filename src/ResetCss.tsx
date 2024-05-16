@@ -111,9 +111,11 @@ export const reset = css`
     display: none;
   }
   body {
-    line-height: 1;
-    color: black;
+    line-height: 1.2;
+    font-weight: 400;
+    color: ${(props) => props.theme.white.darker};
     margin: 0;
+    background-color: black;
   }
   menu,
   ol,

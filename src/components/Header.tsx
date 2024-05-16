@@ -128,7 +128,7 @@ const Logo = styled(motion.svg)`
   height: 25px;
   fill: ${(props) => props.theme.red};
   path {
-    stroke-width: 3px;
+    stroke-width: 1px;
     stroke: white;
   }
 `;

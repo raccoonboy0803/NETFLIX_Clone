@@ -6,26 +6,30 @@ import styled from 'styled-components';
 import { getMovies, MovieDataProps } from '../api';
 import { makeImagePath } from '../utils';
 import useWindowDimensions from '../utils/windowResize';
+import YouTube from 'react-youtube';
+import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
+import { YoutubeMovieTitle } from '../youtubeVideoId';
 
 function Home() {
   const offset = 6;
+  const [index, setIndex] = useState(0);
+  const [leaving, setLeaving] = useState(false);
   const navigate = useNavigate();
-  const { scrollY } = useScroll();
   const bigMovieMatch = useMatch('/movies/:movieId');
+  const { scrollY } = useScroll();
   const windowWidth = useWindowDimensions();
   const { data, isLoading } = useQuery<MovieDataProps>(
     ['movies', 'nowPlaying'],
     getMovies
   );
+  const YoutubeTitles = YoutubeMovieTitle.map((item) => item.title);
+  const YoutubeVideoIds = YoutubeMovieTitle.map((item) => item.videoId);
+
   const clickedMovie =
     bigMovieMatch?.params.movieId &&
     data?.results.find(
       (movie) => movie.id + '' === bigMovieMatch?.params.movieId
     );
-  console.log('clickedMovie::', clickedMovie);
-
-  const [index, setIndex] = useState(0);
-  const [leaving, setLeaving] = useState(false);
 
   const increaseIndex = () => {
     if (data) {
@@ -33,15 +37,16 @@ function Home() {
       toggleLeaving();
       const totalMovies = data.results.length - 2;
       const maxIndex = Math.ceil(totalMovies / offset);
-
       setIndex((prev) => (prev === maxIndex - 1 ? 0 : prev + 1));
     }
   };
 
   const toggleLeaving = () => setLeaving((prev) => !prev);
+
   const onBoxClicked = (movieId: number) => {
     navigate(`/movies/${movieId}`);
   };
+
   const clickOverlay = () => navigate('/');
 
   const rowVariants = {
@@ -95,7 +100,6 @@ function Home() {
                       initial="normal"
                       whileHover="hover"
                     >
-                      <img src="" alt="" />
                       <Info variants={infoVariants}>
                         <h4>{movie.title}</h4>
                       </Info>
@@ -118,13 +122,34 @@ function Home() {
                 >
                   {clickedMovie && (
                     <>
-                      <ModalImage
-                        style={{
-                          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)) , url(${makeImagePath(
-                            clickedMovie.backdrop_path
-                          )})`,
-                        }}
-                      />
+                      {YoutubeTitles.includes(clickedMovie.title) ? (
+                        <YouTube
+                          videoId={
+                            YoutubeVideoIds[
+                              YoutubeTitles.findIndex(
+                                (item) => item === clickedMovie.title
+                              )
+                            ]
+                          }
+                          opts={{
+                            width: '100%',
+                            height: '400px',
+                            playerVars: {
+                              autoplay: 1,
+                              modestbranding: 1,
+                            },
+                          }}
+                          onReady={(e) => {}}
+                        />
+                      ) : (
+                        <ModalImage
+                          style={{
+                            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)) , url(${makeImagePath(
+                              clickedMovie.backdrop_path
+                            )})`,
+                          }}
+                        />
+                      )}
                       <ModalTitle>{clickedMovie.title}</ModalTitle>
                       <ModalOverview>{clickedMovie.overview}</ModalOverview>
                     </>
@@ -149,8 +174,8 @@ const boxVariant = {
     },
   },
   hover: {
-    scale: 1.3,
-    y: -80,
+    scale: 1.2,
+    y: -30,
     transition: {
       delay: 0.5,
       duration: 0.3,
@@ -279,12 +304,12 @@ const ModalTitle = styled.h2`
   padding: 10px;
   font-size: 28px;
   position: relative;
-  top: -60px;
+  top: 0px;
 `;
 
 const ModalOverview = styled.div`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
   position: relative;
-  top: -60px;
+  top: 0px;
 `;

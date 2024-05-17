@@ -1,24 +1,12 @@
 import { motion, useAnimation, useScroll } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Link, useMatch } from 'react-router-dom';
+import { Link, useMatch, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import styled from 'styled-components';
 
-const navVariants = {
-  top: { backgroundColor: 'rgba(0,0,0,0)' },
-  scroll: { backgroundColor: 'rgba(0,0,0,1)' },
-};
-
-const logoVariants = {
-  normal: {
-    fillOpacity: 1,
-  },
-  active: {
-    fillOpacity: [0, 1, 0],
-    transition: {
-      repeat: Infinity,
-    },
-  },
-};
+interface FormProps {
+  keyword: string;
+}
 
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -27,6 +15,13 @@ function Header() {
   const inputAnimation = useAnimation();
   const navAnimation = useAnimation();
   const { scrollY } = useScroll();
+  const { register, handleSubmit } = useForm<FormProps>();
+  const navigate = useNavigate();
+
+  const onValid = (data: FormProps) => {
+    console.log('data::', data);
+    navigate(`/search?keyword=${data.keyword}`);
+  };
 
   const toggleSearch = () => {
     if (searchOpen) {
@@ -77,7 +72,7 @@ function Header() {
         </Items>
       </Col>
       <Col>
-        <Search>
+        <Search onSubmit={handleSubmit(onValid)}>
           <motion.svg
             onClick={toggleSearch}
             animate={{ x: searchOpen ? -185 : 0 }}
@@ -93,6 +88,7 @@ function Header() {
             ></path>
           </motion.svg>
           <Input
+            {...register('keyword', { required: true, minLength: 2 })}
             initial={{ scaleX: 0 }}
             animate={inputAnimation}
             transition={{ type: 'linear' }}
@@ -104,6 +100,23 @@ function Header() {
   );
 }
 export default Header;
+
+const navVariants = {
+  top: { backgroundColor: 'rgba(0,0,0,0)' },
+  scroll: { backgroundColor: 'rgba(0,0,0,1)' },
+};
+
+const logoVariants = {
+  normal: {
+    fillOpacity: 1,
+  },
+  active: {
+    fillOpacity: [0, 1, 0],
+    transition: {
+      repeat: Infinity,
+    },
+  },
+};
 
 const Nav = styled(motion.nav)`
   display: flex;
@@ -164,7 +177,7 @@ const Circle = styled(motion.span)`
   background-color: ${(props) => props.theme.red};
 `;
 
-const Search = styled.span`
+const Search = styled.form`
   display: flex;
   color: white;
   align-items: center;

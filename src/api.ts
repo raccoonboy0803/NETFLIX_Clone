@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 // const API_KEY = '92323450e03554bb18bde931be248a4f';
 const BASE_PATH = 'https://api.themoviedb.org/3';
 
@@ -18,6 +20,41 @@ export interface MovieDataProps {
   results: MovieResult[];
   total_pages: number;
   total_results: number;
+}
+
+export interface YoutubeDataProps {
+  kind: string;
+  etag: string;
+  id: {
+    kind: string;
+    videoId: string;
+  };
+  snippet: {
+    publishedAt: string;
+    channelId: string;
+    title: string;
+    description: string;
+    thumbnails: {
+      default: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      medium: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      high: {
+        url: string;
+        width: number;
+        height: number;
+      };
+    };
+    channelTitle: string;
+    liveBroadcastContent: string;
+    publishTime: string;
+  };
 }
 
 const options = {

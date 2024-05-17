@@ -1,19 +1,29 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll } from 'framer-motion';
 import { useState } from 'react';
 import { useQuery } from 'react-query';
+import { useMatch, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { getMovies, MovieDataProps } from '../api';
 import { makeImagePath } from '../utils';
 import useWindowDimensions from '../utils/windowResize';
 
 function Home() {
-  const windowWidth = useWindowDimensions();
   const offset = 6;
+  const navigate = useNavigate();
+  const { scrollY } = useScroll();
+  const bigMovieMatch = useMatch('/movies/:movieId');
+  const windowWidth = useWindowDimensions();
   const { data, isLoading } = useQuery<MovieDataProps>(
     ['movies', 'nowPlaying'],
     getMovies
   );
-  // console.log('data:::', data);
+  const clickedMovie =
+    bigMovieMatch?.params.movieId &&
+    data?.results.find(
+      (movie) => movie.id + '' === bigMovieMatch?.params.movieId
+    );
+  console.log('clickedMovie::', clickedMovie);
+
   const [index, setIndex] = useState(0);
   const [leaving, setLeaving] = useState(false);
 
@@ -23,13 +33,16 @@ function Home() {
       toggleLeaving();
       const totalMovies = data.results.length - 2;
       const maxIndex = Math.ceil(totalMovies / offset);
-      console.log('index::', index);
 
       setIndex((prev) => (prev === maxIndex - 1 ? 0 : prev + 1));
     }
   };
 
   const toggleLeaving = () => setLeaving((prev) => !prev);
+  const onBoxClicked = (movieId: number) => {
+    navigate(`/movies/${movieId}`);
+  };
+  const clickOverlay = () => navigate('/');
 
   const rowVariants = {
     hidden: {
@@ -71,7 +84,9 @@ function Home() {
                   .slice(offset * index, offset * index + offset)
                   .map((movie) => (
                     <Box
+                      layoutId={movie.id + ''}
                       key={movie.id}
+                      onClick={() => onBoxClicked(movie.id)}
                       $bgImage={makeImagePath(
                         movie.backdrop_path,
                         'w500' || ''
@@ -89,6 +104,35 @@ function Home() {
               </Row>
             </AnimatePresence>
           </Slider>
+          {bigMovieMatch ? (
+            <AnimatePresence>
+              <>
+                <Overlay
+                  onClick={clickOverlay}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                />
+                <MovieModal
+                  layoutId={bigMovieMatch.params.movieId}
+                  style={{ top: scrollY.get() + 100 }}
+                >
+                  {clickedMovie && (
+                    <>
+                      <ModalImage
+                        style={{
+                          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7)) , url(${makeImagePath(
+                            clickedMovie.backdrop_path
+                          )})`,
+                        }}
+                      />
+                      <ModalTitle>{clickedMovie.title}</ModalTitle>
+                      <ModalOverview>{clickedMovie.overview}</ModalOverview>
+                    </>
+                  )}
+                </MovieModal>
+              </>
+            </AnimatePresence>
+          ) : null}
         </>
       )}
     </Wrapper>
@@ -128,6 +172,7 @@ const infoVariants = {
 
 const Wrapper = styled.div`
   background-color: black;
+  height: 115vh;
 `;
 
 const Loader = styled.div`
@@ -175,6 +220,7 @@ const Box = styled(motion.div)<{ $bgImage: string }>`
   background-image: url(${(props) => props.$bgImage});
   background-size: cover;
   background-position: center center;
+  cursor: pointer;
   height: 150px;
   &:first-child {
     transform-origin: center left;
@@ -195,4 +241,50 @@ const Info = styled(motion.div)`
     text-align: center;
     font-size: 18px;
   }
+`;
+
+const documentHeight = document.documentElement.scrollHeight;
+
+const Overlay = styled(motion.div)`
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: ${documentHeight}px;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+`;
+
+const MovieModal = styled(motion.div)`
+  position: absolute;
+  width: 40vw;
+  height: 80vh;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  background-color: ${(props) => props.theme.black.lighter};
+  border-radius: 5px;
+`;
+
+const ModalImage = styled.div`
+  width: 100%;
+  height: 500px;
+  background-size: cover;
+  background-position: center center;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+`;
+
+const ModalTitle = styled.h2`
+  color: ${(props) => props.theme.white.lighter};
+  padding: 10px;
+  font-size: 28px;
+  position: relative;
+  top: -60px;
+`;
+
+const ModalOverview = styled.div`
+  color: ${(props) => props.theme.white.lighter};
+  padding: 20px;
+  position: relative;
+  top: -60px;
 `;

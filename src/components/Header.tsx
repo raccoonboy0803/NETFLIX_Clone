@@ -19,7 +19,6 @@ function Header() {
   const navigate = useNavigate();
 
   const onValid = (data: FormProps) => {
-    console.log('data::', data);
     navigate(`/search?keyword=${data.keyword}`);
   };
 
